@@ -1,10 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { safeExecute } = require('../../../../db/config.js');
+const { safeExecute } = require('../../../../schema/db.config.js');
 const {
   BadRequestError,
   UnauthenticatedError,
-} = require('../../../utils/errors/index.js'); 
+} = require('../../../utility/errors/errors.js'); 
+
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
