@@ -1,8 +1,8 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const db = require("./schema/db.config");
-const mainRoutes = require("./src/api/main.routes");
+const {db} = require("./schema/db.config");
+const {mainRouter} = require("./src/mainRoutes");
 const { errorHandler } = require("./src/middleware/error-handler");
 
 //! middleware
@@ -15,7 +15,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 //!Main api
-app.use("/api", mainRoutes);
+app.use("/api", mainRouter);
 
 // ! your error handler middleware should be after all api calls
 app.use(errorHandler);
