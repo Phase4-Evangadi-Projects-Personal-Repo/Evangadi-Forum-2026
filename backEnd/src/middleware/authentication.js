@@ -1,20 +1,20 @@
-const jwt = require('jsonwebtoken');
-const { UnauthenticatedError } = require('../utility/errors/index.js');
+const jwt = require("jsonwebtoken");
+const { UnauthenticatedError } = require("../utility/errors/errors.js");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
+  throw new Error("JWT_SECRET environment variable is required");
 }
 
- const authenticateUser = (req, res, next) => {
+const authenticateUser = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new UnauthenticatedError('Authentication invalid');
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new UnauthenticatedError("Authentication invalid");
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(" ")[1];
 
   try {
     const payload = jwt.verify(token, JWT_SECRET);
@@ -25,8 +25,8 @@ if (!JWT_SECRET) {
     };
     next();
   } catch (error) {
-    throw new UnauthenticatedError('Authentication invalid');
+    throw new UnauthenticatedError("Authentication invalid");
   }
 };
 
-module.exports = {authenticateUser};
+module.exports = { authenticateUser };

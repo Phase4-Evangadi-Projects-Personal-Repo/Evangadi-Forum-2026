@@ -1,0 +1,416 @@
+openapi: 3.2.0
+info:
+  title: Evangadi Forum Question API
+  version: 1.0.0
+  description: Question endpoints
+servers:
+  - url: /
+tags:
+  - name: question
+paths:
+  /api/questions:
+    post:
+      tags:
+        - question
+      summary: Post a new question
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+      responses:
+        '201':
+          description: Question posted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateQuestionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    get:
+      tags:
+        - question
+      summary: Get questions with optional search filtering. Max 100 records.
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Questions fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuestionsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+  /api/questions/search:
+    get:
+      tags:
+        - question
+      summary: Semantic search for questions using vector embeddings
+      description: Performs a semantic search against question vectors using a text query to find conceptually similar questions.
+      parameters:
+        - in: query
+          name: query
+          required: true
+          schema:
+            type: string
+            minLength: 5
+        - in: query
+          name: k
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+        - in: query
+          name: threshold
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+      responses:
+        '200':
+          description: Semantic search completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SemanticSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+  /api/questions/draft-coach:
+    post:
+      tags:
+        - question
+      summary: AI draft coach for a new question
+      description: Returns short checklist-style tips for title and body. Does not persist or post the question.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftCoachRequest'
+      responses:
+        '200':
+          description: Draft suggestions generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftCoachResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '503':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/questions/{questionHash}/answer-fit:
+    post:
+      tags:
+        - question
+      summary: AI answer draft fit vs question
+      description: Assesses whether an answer draft addresses the question (relevance, not factual grading).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: questionHash
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{16}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerFitRequest'
+      responses:
+        '200':
+          description: Answer fit assessed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerFitResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '503':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/questions/{questionHash}:
+    get:
+      tags:
+        - question
+      summary: Get a single question with answers. Max 100 answers.
+      parameters:
+        - in: path
+          name: questionHash
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{16}$'
+      responses:
+        '200':
+          description: Question fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSingleQuestionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/questions/{questionHash}/similar:
+    get:
+      tags:
+        - question
+      summary: Get similar questions for one question
+      parameters:
+        - in: path
+          name: questionHash
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{16}$'
+        - in: query
+          name: k
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+        - in: query
+          name: threshold
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+      responses:
+        '200':
+          description: Similar questions fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SemanticSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+components:
+  schemas:
+    Author:
+      type: object
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+        questionHash:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        answerCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        author:
+          $ref: '#/components/schemas/Author'
+    Answer:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        author:
+          $ref: '#/components/schemas/Author'
+    PaginationMeta:
+      type: object
+      properties:
+        limit:
+          type: integer
+        total:
+          type: integer
+    CreateQuestionRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          minLength: 5
+          maxLength: 255
+        content:
+          type: string
+          minLength: 10
+    CreateQuestionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Question'
+    GetQuestionsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/PaginationMeta'
+            - type: object
+              properties:
+                sortBy:
+                  type: string
+                sortOrder:
+                  type: string
+    GetSingleQuestionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        question:
+          $ref: '#/components/schemas/Question'
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Answer'
+        answersMeta:
+          $ref: '#/components/schemas/PaginationMeta'
+    SimilarQuestion:
+      allOf:
+        - $ref: '#/components/schemas/Question'
+        - type: object
+          properties:
+            score:
+              type: number
+    SemanticSearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimilarQuestion'
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            k:
+              type: integer
+            threshold:
+              type: number
+            query:
+              type: string
+              nullable: true
+            questionHash:
+              type: string
+              nullable: true
+    DraftCoachRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          minLength: 5
+          maxLength: 255
+        content:
+          type: string
+          minLength: 10
+    DraftCoachData:
+      type: object
+      properties:
+        tips:
+          type: array
+          items:
+            type: string
+    DraftCoachResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/DraftCoachData'
+    AnswerFitRequest:
+      type: object
+      required:
+        - answerText
+      properties:
+        answerText:
+          type: string
+          minLength: 20
+    AnswerFitData:
+      type: object
+      properties:
+        level:
+          type: string
+          enum:
+            - strong
+            - partial
+            - weak
+        note:
+          type: string
+    AnswerFitResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AnswerFitData'
