@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+// const { GoogleGenerativeAI } = require("@google/genai");
 const { safeExecute } = require("../../../../schema/db.config.js");
 const {
   ServiceUnavailableError,
@@ -16,10 +17,14 @@ if (!GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is required");
 }
 
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const geminiEmbeddingModel = genAI.getGenerativeModel({
-  model: GEMINI_EMBEDDING_MODEL,
-});
+const ai = new GoogleGenerativeAI(GEMINI_API_KEY);
+console.log("------------ai------------");
+console.log(ai);
+console.log("------------ai------------");
+// const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+// const geminiEmbeddingModel = genAI.getGenerativeModel({
+//   model: GEMINI_EMBEDDING_MODEL,
+// });
 
 /**
  * Utility to collapse consecutive whitespace characters into a single space
@@ -102,10 +107,15 @@ async function generateQuestionEmbedding(sourceText, options = {}) {
   const { taskType = "RETRIEVAL_DOCUMENT", questionId = null } = options;
 
   try {
-    const result = await geminiEmbeddingModel.embedContent({
-      content: { parts: [{ text: sourceText }] },
+    const result = await ai.embedContent({
+      model: process.env.GEMINI_EMBEDDING_MODEL,
+      contents: sourceText,
       taskType,
     });
+    // const result = await geminiEmbeddingModel.embedContent({
+    //   content: { parts: [{ text: sourceText }] },
+    //   taskType,
+    // });
 
     let values = result?.embedding?.values;
 
