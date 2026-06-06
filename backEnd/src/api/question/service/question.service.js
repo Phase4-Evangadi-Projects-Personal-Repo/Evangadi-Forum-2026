@@ -83,7 +83,6 @@ const createQuestionWithVectorService = async (payload) => {
     ) {
       throw new Error("Gemini API returned an empty or invalid embedding");
     }
-
     // Store the generated vector embedding in the database with a 'ready' status
     await storeQuestionVector({
       questionId: creationResult.id,

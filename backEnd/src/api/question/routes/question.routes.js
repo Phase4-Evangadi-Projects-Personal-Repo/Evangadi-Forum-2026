@@ -50,7 +50,7 @@ questionRoutes.get(
  * @access Private
  */
 questionRoutes.get(
-  "/search",
+  "/semanticSearch",
   authenticateUser,
   searchQuestionsSemanticValidation,
   searchQuestionsSemanticController,

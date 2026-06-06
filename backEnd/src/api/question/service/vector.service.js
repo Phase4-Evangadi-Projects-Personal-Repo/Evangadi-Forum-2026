@@ -1,5 +1,5 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-// const { GoogleGenerativeAI } = require("@google/genai");
+// const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 const { safeExecute } = require("../../../../schema/db.config.js");
 const {
   ServiceUnavailableError,
@@ -17,10 +17,6 @@ if (!GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is required");
 }
 
-const ai = new GoogleGenerativeAI(GEMINI_API_KEY);
-console.log("------------ai------------");
-console.log(ai);
-console.log("------------ai------------");
 // const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 // const geminiEmbeddingModel = genAI.getGenerativeModel({
 //   model: GEMINI_EMBEDDING_MODEL,
@@ -102,22 +98,26 @@ function calculateCosineSimilarity(vectorA, vectorB) {
  *                 Use 'RETRIEVAL_QUERY' when generating embeddings for user searches.
  * @returns {Promise<{embedding: Array<number>}>} The normalized embedding vector.
  * @throws {Error} If the embedding response is invalid or missing values.
+ *
  */
+
 async function generateQuestionEmbedding(sourceText, options = {}) {
   const { taskType = "RETRIEVAL_DOCUMENT", questionId = null } = options;
 
+  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   try {
-    const result = await ai.embedContent({
+    const result = await ai.models.embedContent({
       model: process.env.GEMINI_EMBEDDING_MODEL,
       contents: sourceText,
       taskType,
+      config: {
+        outputDimensionality: 768,
+      },
     });
-    // const result = await geminiEmbeddingModel.embedContent({
-    //   content: { parts: [{ text: sourceText }] },
-    //   taskType,
-    // });
 
-    let values = result?.embedding?.values;
+    // console.log(result.embeddings[0].values);
+
+    let values = result?.embeddings[0]?.values;
 
     if (!Array.isArray(values) || values.length === 0) {
       throw new Error("Gemini embedding response does not contain values");
